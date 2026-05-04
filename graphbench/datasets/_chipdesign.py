@@ -23,10 +23,11 @@ from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
 import torch
-from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.data import Data
 from tqdm import tqdm
 
 from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
+from ._base import BaseGraphDataset
 
 
 # (i) helper functions
@@ -38,7 +39,7 @@ from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
 _logger = get_logger(__name__)
 
 
-class ChipDesignDataset(InMemoryDataset):
+class ChipDesignDataset(BaseGraphDataset):
     def __init__(
             self,
         name: str,
@@ -89,28 +90,18 @@ class ChipDesignDataset(InMemoryDataset):
         - load_preprocessed: Placeholder flag for future workflows.
 
         """
-
-        # process data if needed
-        if self.processed_path.exists():
-            _logger.info(f"Loading cached processed data: {self.processed_path}")
-            self.load(self.processed_path)
-            return
-
-        self._prepare()  # (i) downloads, unpacks, load data + (ii) timestep handle + (e) subgraph + collate
-        self.load(self.processed_path)
-        if self.cleanup_raw:
-            self._cleanup()
+        self._load_cached_or_prepare(
+            processed_path=self.processed_path,
+            cleanup_raw=self.cleanup_raw,
+            logger=_logger,
+        )
 
 
     def _prepare(self) -> None:
         """
-        Download (if needed), unpack and convert raw ChipDesign files into a
-        list of `torch_geometric.data.Data` objects. The resulting list is
-        returned for further processing and saved to `self.processed_path`.
+        Download (if needed) and unpack raw ChipDesign files.
         """
 
-        # Download/unpack the archive into `self._raw_dir` and provide a
-        # `processed_dir` hint for helpers that may extract processed artifacts.
         download_and_unpack(
             source=self.source,
             raw_dir=self._raw_dir,
@@ -118,36 +109,15 @@ class ChipDesignDataset(InMemoryDataset):
             logger=_logger,
         )
 
-        # Load and convert the raw files to PyG Data objects
+    def _load_graphs(self) -> List[Data]:
+        """
+        Convert raw `.pth` files into a list of PyG `Data` objects.
+        """
         data_list = self._load_chipdesign_graphs()
-
-        # Apply pre_filter if provided
-        if self.pre_filter is not None:
-            data_list = [data for data in data_list if self.pre_filter(data)]
-
-        # Apply optional pre_transform
-        if self.pre_transform is not None:
-            data_list = [self.pre_transform(d) for d in data_list]
-
-        # Save the processed cache for fast subsequent loads
-        self.save(data_list, self.processed_path)
-        _logger.info(f"Saved processed dataset -> {self.processed_path}")
-
+        return data_list
 
     def _cleanup(self) -> None:
-        if self._raw_dir.exists():
-            _logger.info(f"Cleaning up: {self._raw_dir}")
-            # remove only the dataset-specific temp folder
-            for p in sorted(self._raw_dir.rglob("*"), reverse=True):
-                try:
-                    p.unlink()
-                except IsADirectoryError:
-                    pass
-            try:
-                self._raw_dir.rmdir()
-            except OSError:
-                # not empty due to shared artifacts; leave it
-                pass
+        self._cleanup_path(self._raw_dir, logger=_logger)
 
     def _load_chipdesign_graphs(self) -> List[Data]:
         """

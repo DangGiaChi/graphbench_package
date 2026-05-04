@@ -11,9 +11,10 @@ import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
 
-from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.data import Data
 
 from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
+from ._base import BaseGraphDataset
 
 
 # (i) helper functions
@@ -25,7 +26,7 @@ from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
 _logger = get_logger(__name__)
 
 
-class WeatherforecastingDataset(InMemoryDataset):
+class WeatherforecastingDataset(BaseGraphDataset):
     """
     Benchmark dataset class for weather forecasting graph data.
     Handles downloading, processing, and loading splits for PyG experiments.
@@ -66,14 +67,11 @@ class WeatherforecastingDataset(InMemoryDataset):
         self.processed_path = self.weather_dir / self.SOURCES[self.name].raw_folder / "processed" / f"{self.name}.pt"
         super().__init__(str(self.weather_dir), transform, pre_transform, pre_filter)
 
-        # process data if needed
-        if self.processed_path.exists():
-            _logger.info(f"Loading cached processed data: {self.processed_path}")
-            self.load(self.processed_path)
-            return
-
-        self._prepare()  # (i) downloads, unpacks, load data + (ii) timestep handle + (e) subgraph + collate
-        self.load(self.processed_path)
+        self._load_cached_or_prepare(
+            processed_path=self.processed_path,
+            cleanup_raw=False,
+            logger=_logger,
+        )
 
 
 
@@ -102,28 +100,25 @@ class WeatherforecastingDataset(InMemoryDataset):
 
     def _prepare(self) -> None:
         """
-        Download, unpack, and process the dataset. Applies transforms and saves processed data.
+        Download and unpack the weather data if it is not already cached.
         """
+
         if self.generate:
-            #currently not implemented
+            return
+
+        download_and_unpack(
+            source=self.source,
+            raw_dir=self._raw_dir,
+            processed_dir=self.processed_path,
+            logger=_logger,
+        )
+
+    def _load_graphs(self) -> List[Data]:
+        if self.generate:
             data_list = self._generate()
         else:
-            download_and_unpack(
-                source=self.source,
-                raw_dir=self._raw_dir,
-                processed_dir=self.processed_path,
-                logger=_logger,
-            )
-            loader = self._load_weather_graphs
-            loader_kwargs = {}
-            data_list = loader(**loader_kwargs)
-        # Apply pre_filter if provided
-        if self.pre_filter is not None:
-            data_list = [data for data in data_list if self.pre_filter(data)]
-        if self.pre_transform is not None:
-            data_list = [self.pre_transform(d) for d in data_list]
-        self.save(data_list, self.processed_path)
-        _logger.info(f"Saved processed dataset -> {self.processed_path}")
+            data_list = self._load_weather_graphs()
+        return data_list
 
 
 
@@ -131,19 +126,7 @@ class WeatherforecastingDataset(InMemoryDataset):
         """
         Remove temporary raw data files for this dataset split.
         """
-        if self._raw_dir.exists():
-            _logger.info(f"Cleaning up: {self._raw_dir}")
-            # remove only the dataset-specific temp folder
-            for p in sorted(self._raw_dir.rglob("*"), reverse=True):
-                try:
-                    p.unlink()
-                except IsADirectoryError:
-                    pass
-            try:
-                self._raw_dir.rmdir()
-            except OSError:
-                # not empty due to shared artifacts; leave it
-                pass
+        self._cleanup_path(self._raw_dir, logger=_logger)
 
 
     def _load_weather_graphs(self) -> List[Data]:
@@ -152,6 +135,7 @@ class WeatherforecastingDataset(InMemoryDataset):
         """
         filepaths = self._find_matching_files(task=self.name, split=self.split, directory=self._raw_dir, size=self.size)
         self.load(filepaths[0])
+        return [self.get(i) for i in range(len(self))]
 
     def _find_matching_files(self,directory, task, size, split):
         """
