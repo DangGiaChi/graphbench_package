@@ -66,6 +66,8 @@ class BaseGraphDataset(InMemoryDataset):
         load_path=None,
         apply_transforms=True,
     ):
+        """Load cached processed data if exists, otherwise prepare, process, and cache the dataset."""
+
         processed_path = Path(processed_path)
         resolved_load_path = Path(load_path) if load_path is not None else processed_path
 

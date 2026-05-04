@@ -49,7 +49,7 @@ class WeatherforecastingDataset(BaseGraphDataset):
         #currently downloads everything at once for a single dataset. Up to the user to manually unpack it so far
         self.SOURCES: Dict[str, SourceSpec] = {
             "weather_64": SourceSpec(
-                url="https://huggingface.co/datasets/log-rwth-aachen/Graphbench_Weather/resolve/main/https%3A/huggingface.co/datasets/log-rwth-aachen/Graphbench_Weather/tree/main",
+                url="https://huggingface.co/datasets/log-rwth-aachen/Graphbench_Weather/resolve/main/weather_64.pt",
                 raw_folder="weather_64",
             ),
         }
