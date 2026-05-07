@@ -1,89 +1,11 @@
 import os
-from typing import Callable, Dict, List, Optional
+from typing import Optional
 
 import requests
 
-from graphbench._helpers import split_dataset
 from graphbench._metadata import expand_dataset_names
-
-
-DatasetFactory = Callable[[str, str, Optional[str]], object]
-
-
-class SplitStrategy:
-    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, object]:
-        raise NotImplementedError
-
-
-class FixedSplitStrategy(SplitStrategy):
-    def __init__(self, split_map: Optional[Dict[str, str]] = None) -> None:
-        self.split_map = split_map or {"train": "train", "valid": "val", "test": "test"}
-
-    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, object]:
-        return {
-            key: factory(dataset_name, split_name, None)
-            for key, split_name in self.split_map.items()
-        }
-
-
-class RatioSplitStrategy(SplitStrategy):
-    def __init__(self, train: float, valid: float, test: float) -> None:
-        self.train_ratio = train
-        self.valid_ratio = valid
-        self.test_ratio = test
-
-    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, object]:
-        dataset = factory(dataset_name, "train", None)
-        train_dataset, valid_dataset, test_dataset = split_dataset(
-            dataset,
-            self.train_ratio,
-            self.valid_ratio,
-            self.test_ratio,
-        )
-        return {
-            "train": train_dataset,
-            "valid": valid_dataset,
-            "test": test_dataset,
-        }
-
-
-class AlgoReasSplitStrategy(SplitStrategy):
-    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, object]:
-        if "sizegen" in dataset_name:
-            return {
-                "train": None,
-                "valid": None,
-                "test": factory(dataset_name, "test", dataset_name),
-            }
-
-        dataset = factory(dataset_name, "train", f"{dataset_name}_16")
-        train_dataset, valid_dataset, _ = split_dataset(dataset, 0.99, 0.01, 0)
-        test_suffix = "64" if "flow" in dataset_name else "128"
-        test_dataset = factory(dataset_name, "test", f"{dataset_name}_{test_suffix}")
-        return {
-            "train": train_dataset,
-            "valid": valid_dataset,
-            "test": test_dataset,
-        }
-
-
-class DatasetRegistry:
-    def __init__(self) -> None:
-        self._entries: List[tuple[Callable[[str], bool], DatasetFactory, SplitStrategy]] = []
-
-    def register(
-        self,
-        matcher: Callable[[str], bool],
-        factory: DatasetFactory,
-        split_strategy: SplitStrategy,
-    ) -> None:
-        self._entries.append((matcher, factory, split_strategy))
-
-    def build(self, dataset_name: str) -> Dict[str, object]:
-        for matcher, factory, split_strategy in self._entries:
-            if matcher(dataset_name):
-                return split_strategy.build(factory, dataset_name)
-        raise ValueError(f"Dataset {dataset_name} is not supported.")
+from ._dataset_registry import DatasetRegistry
+from ._split_strategies import AlgoReasSplitStrategy, FixedSplitStrategy, RatioSplitStrategy
 
 
 class Loader():
