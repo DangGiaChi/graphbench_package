@@ -81,7 +81,7 @@ class Loader():
         return expand_dataset_names(self.dataset_names)
 
     def _check_for_updates(self):
-            # Download the remote version file
+        # Download the remote version file
         remote_version_url = ""
         try:
             response = requests.get(remote_version_url)
@@ -141,7 +141,7 @@ class Loader():
 
         return BlueSkyDataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
@@ -156,7 +156,7 @@ class Loader():
 
         return ChipDesignDataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
@@ -168,7 +168,7 @@ class Loader():
 
         return WeatherforecastingDataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
@@ -180,7 +180,7 @@ class Loader():
 
         return CODataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
@@ -193,7 +193,7 @@ class Loader():
 
         return SATDataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
@@ -208,7 +208,7 @@ class Loader():
 
         return ECDataset(
             root=self.root,
-            name=dataset_name,
+            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
             transform=self.transform,
