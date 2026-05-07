@@ -1,5 +1,5 @@
 import os
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Callable, Dict, List, Optional, TYPE_CHECKING, Union
 
 import requests
 
@@ -34,7 +34,7 @@ class Loader():
         self.pre_transform = pre_transform
         self.transform = transform
         self.generate_fallback = generate_fallback
-        self.data_list: List[Dict[str, Any]] = []
+        self.data_list: List[Dict[str, InMemoryDataset]] = []
         self.update = update
         self.sat_solver = sat_solver
         self.use_satzilla_features = use_satzilla_features
@@ -129,7 +129,7 @@ class Loader():
                     "This could be due to missing dataset files or first-time setup. No update action will be taken."
                 )
 
-    def load(self) -> List[Dict[str, Any]]:
+    def load(self) -> List[Dict[str, InMemoryDataset]]:
         # TODO version file does not exist yet, so checking for updates does nothing other than printing a warning
         # self._check_for_updates()
         datasets = self._get_dataset_names()
@@ -139,7 +139,7 @@ class Loader():
 
         return self.data_list
         
-    def _loader(self, dataset_name: str) -> Dict[str, Any]:
+    def _loader(self, dataset_name: str) -> Dict[str, InMemoryDataset]:
         return self._registry.build(dataset_name)
 
     def _make_algoreas_dataset(

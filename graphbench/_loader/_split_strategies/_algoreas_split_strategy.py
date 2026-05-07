@@ -1,11 +1,15 @@
-from typing import Any, Dict
+from typing import Dict, TYPE_CHECKING
 
 from graphbench._helpers import split_dataset
 from ._split_strategy import DatasetFactory, SplitStrategy
 
 
+if TYPE_CHECKING:
+    from torch_geometric.data import InMemoryDataset
+
+
 class AlgoReasSplitStrategy(SplitStrategy):
-    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, Any]:
+    def build(self, factory: DatasetFactory, dataset_name: str) -> Dict[str, InMemoryDataset]:
         if "sizegen" in dataset_name:
             return {
                 "train": None,
