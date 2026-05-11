@@ -17,7 +17,7 @@ The `name` argument selects among supported dataset variants (e.g. 'ba_small',
 
 import os
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, Literal, Optional, Union
 
 from torch_geometric.data import Data, InMemoryDataset
 
@@ -38,7 +38,7 @@ class CODataset(InMemoryDataset):
     def __init__(
         self,
         name: str,
-        split: str,
+        split: Literal["train", "val", "test"],
         root: Union[str, Path],
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,

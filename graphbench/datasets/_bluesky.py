@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TypeAlias, Union
+from typing import Callable, Dict, List, Literal, Mapping, Optional, Sequence, Tuple, TypeAlias, Union
 
 import pandas as pd
 import torch
@@ -210,7 +210,7 @@ class BlueSkyDataset(InMemoryDataset):
     def __init__(
         self,
         name: str,
-        split: str,
+        split: Literal["train", "val", "test"],
         root: Union[str, Path],
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
