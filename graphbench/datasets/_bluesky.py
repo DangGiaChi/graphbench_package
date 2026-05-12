@@ -210,7 +210,7 @@ class BlueSkyDataset(GraphDataset):
 
     def __init__(
         self,
-        name: str,
+        name: Literal["bluesky_quotes", "bluesky_replies", "bluesky_reposts"],
         split: Literal["train", "val", "test"],
         root: Union[str, Path],
         transform: Optional[Callable[[Data], Data]] = None,
@@ -224,6 +224,22 @@ class BlueSkyDataset(GraphDataset):
         empty_emb_file_name: Union[str, Path] = "empty.pt",
         target_file_name: Union[str, Path] = _TARGETS_PT_PATH,
     ):
+        """
+        Args:
+            name: Whether to load the quotes, replies, or reposts graph.
+            split: Whether to load the train, validation, or test split of the dataset.
+                   This splits the graph based on pre-defined time intervals.
+            root: Root directory where the ``bluesky`` dataset folder is stored.
+            transform: Optional PyG transform applied to data objects before every access.
+            pre_transform: Optional PyG transform applied before saving data objects to disk.
+            pre_filter: A function that indicates whether a data object should be included in the final dataset.
+            follower_subgraph: (Not implemented) If True, keep a 3-hop BFS subgraph.
+            cleanup_raw: If True, remove raw files after processing.
+            load_preprocessed: If True, load existing processed objects instead of regenerating.
+            feature_file_name: Path to torch file containing `dict[user_id] -> list[(ts, Tensor)]`.
+            empty_emb_file_name: Path to a torch Tensor used as the "empty" embedding.
+            target_file_name: Path to torch file containing `dict[user_id] -> list[(ts, likes, replies, reposts)]`.
+        """
         self.name = name.lower()
         if self.name not in self.SOURCES:
             raise ValueError(f"Unsupported dataset name: {self.name}")
