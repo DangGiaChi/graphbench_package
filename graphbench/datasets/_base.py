@@ -1,7 +1,7 @@
 from pathlib import Path
 from abc import ABC, abstractmethod
 
-from torch_geometric.data import InMemoryDataset
+from torch_geometric.data import Data, InMemoryDataset
 
 
 class GraphDataset(InMemoryDataset, ABC):
@@ -34,7 +34,7 @@ class GraphDataset(InMemoryDataset, ABC):
         return None
 
     @abstractmethod
-    def _load_graphs(self):
+    def _load_graphs(self) -> list[Data]:
         """Return a list of Data objects ready for filtering and transforms."""
         raise NotImplementedError
 
