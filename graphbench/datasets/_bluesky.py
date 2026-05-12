@@ -177,7 +177,7 @@ class BlueSkyDataset(GraphDataset):
         Path to torch file: dict[user_id] -> list[(ts, likes, replies, reposts)].
     """
 
-    SOURCES_RAW: Dict[str, SourceSpec] = {
+    _SOURCES_RAW: Dict[str, SourceSpec] = {
         "bluesky_quotes": SourceSpec(
             url="https://zenodo.org/records/14669616/files/graphs.tar.gz",
             raw_folder="bluesky_graphs",
@@ -192,7 +192,7 @@ class BlueSkyDataset(GraphDataset):
         ),
     }
 
-    SOURCES: Dict[str, SourceSpec] = {
+    _SOURCES: Dict[str, SourceSpec] = {
         "bluesky_quotes": SourceSpec(
             url="https://huggingface.co/datasets/log-rwth-aachen/Graphbench_SocialMedia/resolve/main/quotes.zip",
             raw_folder="bluesky_quotes",
@@ -241,24 +241,24 @@ class BlueSkyDataset(GraphDataset):
             target_file_name: Path to torch file containing `dict[user_id] -> list[(ts, likes, replies, reposts)]`.
         """
         self.name = name.lower()
-        if self.name not in self.SOURCES:
+        if self.name not in self._SOURCES:
             raise ValueError(f"Unsupported dataset name: {self.name}")
         assert split in ["train", "val", "test"], "Only 'train', 'val', 'test', 'all_edges' and 'all_targets' splits are supported."
 
         self.split = split
-        self.source = self.SOURCES_RAW[self.name]
-        self.source_features = self.SOURCES[self.name]
+        self.source = self._SOURCES_RAW[self.name]
+        self.source_features = self._SOURCES[self.name]
         self._logger = _logger
         self.cleanup_raw = cleanup_raw
         self.load_preprocessed = load_preprocessed
         self.pre_transform = pre_transform
         # paths
         self.bluesky_dir = Path(root) / "bluesky"
-        self._raw_dir = (self.bluesky_dir / self.SOURCES_RAW[self.name].raw_folder / "raw" )
+        self._raw_dir = (self.bluesky_dir / self._SOURCES_RAW[self.name].raw_folder / "raw" )
         # Include time window & task in the processed filename to avoid collisions
         subflag = ""
-        self._raw_feature_dir = (self.bluesky_dir / self.SOURCES[self.name].raw_folder / "raw")
-        self.processed_path = self.bluesky_dir / self.SOURCES[self.name].raw_folder / "processed" / f"{self.name}{subflag}_{split}.pt"
+        self._raw_feature_dir = (self.bluesky_dir / self._SOURCES[self.name].raw_folder / "raw")
+        self.processed_path = self.bluesky_dir / self._SOURCES[self.name].raw_folder / "processed" / f"{self.name}{subflag}_{split}.pt"
         super().__init__(str(self.bluesky_dir), transform, pre_transform, pre_filter)
 
         self.feature_file_name = Path(feature_file_name)
