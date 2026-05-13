@@ -17,13 +17,16 @@ The `name` argument selects among supported dataset variants (e.g. 'ba_small',
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, Literal, Optional, TYPE_CHECKING, Union
 
 from graphbench._co_helpers import BADataset, ERDataset, RBDataset
 from graphbench._helpers import download_and_unpack, split_dataset, SourceSpec, get_logger
 from ._base import GraphDataset
+
+
+if TYPE_CHECKING:
+    from torch_geometric.data import Data
 
 
 # (i) helper functions

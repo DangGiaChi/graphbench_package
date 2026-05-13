@@ -1,22 +1,4 @@
 from __future__ import annotations
-"""
-chipdesign dataset loader
--------------------------
-
-This module provides `ChipDesignDataset`, a PyTorch Geometric `InMemoryDataset`
-wrapper for the Chip Design dataset used by the project. The dataset class is
-responsible for downloading/unpacking the original archive (via
-`helpers.download._download_and_unpack`), locating the preprocessed `.pth`
-files, converting each example into a PyG `Data` object and caching a processed
-`.pt` file for fast subsequent loading.
-
-Usage notes:
-- The dataset expects a directory structure where the archive unpacks into a
-    `raw/Data/` directory containing `train.pth`, `val.pth` and `test.pth` files.
-- Instantiating the dataset will load a processed cache if available; otherwise
-    it will download/unpack and convert the raw files then write the processed
-    cache to `root/chipdesign/chipdesign/processed/<name>_<split>.pt`.
-"""
 
 import os
 from pathlib import Path
@@ -41,6 +23,25 @@ _logger = get_logger(__name__)
 
 
 class ChipDesignDataset(GraphDataset):
+    """
+    chipdesign dataset loader
+    -------------------------
+
+    A PyTorch Geometric `InMemoryDataset`
+    wrapper for the Chip Design dataset used by the project. The dataset class is
+    responsible for downloading/unpacking the original archive (via
+    `helpers.download._download_and_unpack`), locating the preprocessed `.pth`
+    files, converting each example into a PyG `Data` object and caching a processed
+    `.pt` file for fast subsequent loading.
+
+    Usage notes:
+    - The dataset expects a directory structure where the archive unpacks into a
+        `raw/Data/` directory containing `train.pth`, `val.pth` and `test.pth` files.
+    - Instantiating the dataset will load a processed cache if available; otherwise
+        it will download/unpack and convert the raw files then write the processed
+        cache to `root/chipdesign/chipdesign/processed/<name>_<split>.pt`.
+    """
+
     def __init__(
             self,
         name: str,

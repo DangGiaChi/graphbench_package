@@ -1,15 +1,5 @@
 from __future__ import annotations
 
-"""
-sat dataset loader
-------------------
-
-This module implements the `SATDataset` class which prepares several SAT
-benchmark datasets as PyG `InMemoryDataset` objects. 
-
-The class handles downloading SAT datasets and supplementing labels via csv files. 
-"""
-
 import gc
 import os
 import tempfile
@@ -54,6 +44,15 @@ _logger = get_logger(__name__)
 
 
 class SATDataset(GraphDataset):
+    """
+    sat dataset loader
+    ------------------
+
+    Prepares several SAT benchmark datasets as PyG `InMemoryDataset` objects.
+
+    The class handles downloading SAT datasets and supplementing labels via csv files.
+    """
+
     def __init__(
         self,
         name: str,

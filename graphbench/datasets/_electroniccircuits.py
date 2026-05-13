@@ -1,16 +1,5 @@
 from __future__ import annotations
 
-"""
-electronic circuits dataset loader
-----------------------------------
-
-This module provides `ECDataset`, a PyTorch Geometric `InMemoryDataset`
-implementation for Electronic Circuits benchmark datasets. It downloads and
-unpacks archived JSON representations of circuit instances and converts them
-into PyG `Data` objects. The class supports loading preprocessed caches and
-offers utilities for label normalization and dataset splitting.
-"""
-
 import json
 import os
 from pathlib import Path
@@ -18,7 +7,6 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import torch
-from tqdm import tqdm
 from torch_geometric.data import Data
 
 from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
@@ -35,6 +23,17 @@ _logger = get_logger(__name__)
 
 
 class ECDataset(GraphDataset):
+    """
+    electronic circuits dataset loader
+    ----------------------------------
+
+    A PyTorch Geometric `InMemoryDataset`
+    implementation for Electronic Circuits benchmark datasets. It downloads and
+    unpacks archived JSON representations of circuit instances and converts them
+    into PyG `Data` objects. The class supports loading preprocessed caches and
+    offers utilities for label normalization and dataset splitting.
+    """
+
     def __init__(
         self,
         name: str,
