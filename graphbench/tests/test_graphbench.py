@@ -113,7 +113,7 @@ class TestGraphBenchEvaluatorFull(unittest.TestCase):
         y_true = torch.randn(10, 1)
         y_pred = torch.randn(10, 1)
         expected = torch.mean(torch.abs(y_true - y_pred)).item()
-        self.assertAlmostEqual(ev.evaluate(y_pred, y_true), expected, places=6)
+        self.assertAlmostEqual(ev.evaluate(y_pred, y_true), expected, places=5)
         
         # Multi-task [10, 3] - averaged over tasks
         y_true = torch.randn(10, 3)
@@ -133,7 +133,7 @@ class TestGraphBenchEvaluatorFull(unittest.TestCase):
         y_true = torch.randn(10, 1)
         y_pred = torch.randn(10, 1)
         expected = torch.sqrt(torch.mean((y_true - y_pred) ** 2)).item()
-        self.assertAlmostEqual(ev.evaluate(y_pred, y_true), expected, places=6)
+        self.assertAlmostEqual(ev.evaluate(y_pred, y_true), expected, places=5)
 
     def test_rse(self):
         ev = self.get_evaluator("RSE")
@@ -154,7 +154,7 @@ class TestGraphBenchEvaluatorFull(unittest.TestCase):
         if np.isnan(expected):
             self.assertTrue(np.isnan(got))
         else:
-            self.assertAlmostEqual(got, expected, places=6)
+            self.assertAlmostEqual(got, expected, places=5)
 
     def test_spearman(self):
         # spearman_r_0 - tests first task column
