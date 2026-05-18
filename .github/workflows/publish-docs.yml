@@ -1,0 +1,39 @@
+name: Build and Publish Package Documentation to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+  release:
+    types: [created]
+
+jobs:
+  publishdocs:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      # required for actions/deploy-pages, which is used inside sphinx-notes/pages
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+      - name: Install dependencies
+        # we're installing sphinx here (even though sphinx-notes/pages will also install it) so we can run sphinx-apidoc
+        run: |
+          pip install git+https://github.com/pyg-team/pyg_sphinx_theme.git
+          pip install -U sphinx==9.1.0
+      - name: Run sphinx-apidoc
+        run: sphinx-apidoc --output-dir _api .. --separate --no-toc
+      - name: Build and deploy to GitHub Pages
+        id: deployment
+        uses: sphinx-notes/pages@v3
+        with:
+          checkout: false  # we're doing the checkout ourselves to have more control over how dependencies are installed
+          python-version: 3.12
+          sphinx-version: 9.1.0

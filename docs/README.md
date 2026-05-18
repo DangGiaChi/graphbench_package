@@ -3,11 +3,12 @@
 ## Dependencies
 
 Install sphinx and the PyG theme.
-We're going to ignore the fact that the PyG theme requires an extremely old version of Sphinx.
+We're going to ignore the fact that the PyG theme requires an extremely old version of Sphinx and install a newer version instead.
+The second install command will show some dependency conflicts because of that, but that shouldn't be a problem.
 
 ```
 pip install git+https://github.com/pyg-team/pyg_sphinx_theme.git
-pip install -U sphinx
+pip install -U sphinx==9.1.0
 ```
 
 
