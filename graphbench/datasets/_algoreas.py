@@ -25,7 +25,7 @@ class AlgoReasDataset(GraphDataset):
     Algorithmic reasoning (AlgoReas) datasets.
 
     Note:
-        This class should only be used directly when generating new datasets.
+        This class **should only be used directly when generating new datasets**.
         To access provided datasets, please consider using :class:`graphbench.Loader`.
         The sections below give details on the data available through the :class:`graphbench.Loader` interface.
 

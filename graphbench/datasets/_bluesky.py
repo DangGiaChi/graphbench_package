@@ -145,36 +145,102 @@ def _add_edge_time(df: pd.DataFrame, format='%Y%m%d%H%M', index=2) -> Tuple[Tens
 # -----------------------------------------------------------------------------#
 
 class BlueSkyDataset(GraphDataset):
-    """
-    A compact PyG InMemoryDataset for BlueSky graphs.
+    r"""
+    Social Networks (BlueSky) datasets.
 
-    - Supports: 'followers', 'feed', 'quotes', 'replies', 'reposts'
-    - Process node features from per-post embeddings (aggregated per user)
-    - Process targets (likes / reply / repost) from a prebuilt torch dict
-    - Optional follower-subgraph via BFS from a high-degree node
+    Note:
+        This class **should not be used directly**, please use :class:`graphbench.Loader` instead to access the provided
+        datasets.
+        The purpose of this page is merely to provide details on the dataset.
 
-    Notes:
-    * For large archives, we stream to disk and extract.
-    * Feature and target tensors are loaded from user-provided .pt files.
 
-    Parameters
-    ----------
-    name : str
-        One of {'followers','feed','quotes','replies','reposts'}
-    split: str
-        One of {'train', 'val', 'test'}
-    root : str | Path
-        Root directory for caching.
-    follower_subgraph : bool
-        If True (only valid for 'followers'), keep a 3-hop BFS subgraph.
-    cleanup_raw : bool
-        If False, cleanup tmp downloads after processing.
-    feature_file_name : str | Path
-        Path to torch file containing dict[user_id] -> list[(ts, Tensor)].
-    empty_emb_file_name : str | Path
-        Path to a torch Tensor used as the 'empty' embedding.
-    target_file_name : str | Path
-        Path to torch file: dict[user_id] -> list[(ts, likes, replies, reposts)].
+    Overview:
+        We provide three single-graph datasets derived from the BlueSky social media platform.
+        Each graph represents a social network, where nodes represent users and
+        directed edges represent interactions between users.
+        The three graphs differ in the type of interaction ("engagement") represented by the edges;
+        they can be quotes, replies, or reposts.
+
+        Each interaction is timestamped, and we only construct edges based on interactions that occur in a pre-defined
+        time window :math:`(t_0, t_1]`.
+        For each user, node features are derived from the content of their posts in the same time window.
+        The task is to predict the median number of engagements a user will receive on future posts in the time window
+        :math:`(t_1, t_2]`.
+
+        The dataset is based on the data curated by
+        `Faila and Rossetti <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0310330>`__.
+
+
+    Splits:
+        We temporally split each graph into training, validation, and test sets to ensure that models are trained
+        exclusively on past information and evaluated on later interactions.
+        The splits are based on the following points in time:
+
+        - :math:`t_{start}`: February 17th, 2023
+        - :math:`t_A`: December 11th, 2023
+        - :math:`t_B`: January 22nd, 2024
+        - :math:`t_C`: February 20th, 2024
+        - :math:`t_{end}`: March 18th, 2024
+
+        These were chosen such that the proportion of posts in the intervals :math:`(t_{start}, t_A]`,
+        :math:`(t_A, t_B]`, :math:`(t_B, t_C]`, :math:`(t_C, t_{end}]` amounts to, resp., 55%, 15%, 15%, 15%.
+        Using these points, the dataset is split into training, validation, and test splits as follows:
+
+        - Training:   :math:`t_0 = t_{start}, t_1 = t_A, t_2 = t_B`
+        - Validation: :math:`t_0 = t_{start}, t_1 = t_B, t_2 = t_C`
+        - Test:       :math:`t_0 = t_{start}, t_1 = t_C, t_2 = t_{end}`
+
+        Setting :math:`t_0 = t_{start}` for all splits reflects a realistic scenario where a social network grows over
+        time, in the sense that user representations evolve as they generate new content and their connections expand
+        as they interact with more users.
+
+
+    Graph Attributes:
+        Each of the three graphs comes with the following attributes:
+
+        .. list-table::
+           :header-rows: 1
+
+           * - Attribute name
+             - Size
+             - Description
+           * - ``x``
+             - ``[num_nodes, 384]``
+             - Node features: aggregated embeddings of the user's posts
+           * - ``y``
+             - ``[num_nodes, 3]``
+             - Targets: median number of engagements received by the user's posts
+
+        The node features ``x`` describe the user with an aggregated representation of the content of their posts in the
+        time interval :math:`(t_0, t_1]`, obtained by a pretrained language model.
+        For each user, we employed the
+        `sentence-transformers/all-MiniLM-L6-v2 <https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2>`__
+        language model to embed the text
+        obtained by concatenating the content of each of their posts at the monthly granularity.
+        We then aggregated these by averaging over the time interval :math:`(t_0, t_1]`.
+
+        The node targets ``y`` are the median number of engagements received by the user's posts in the prediction
+        window :math:`(t_1, t_2]`.
+        We applied a logarithmic transformation to reduce skew in these prediction targets.
+        We include the ground truth targets for all three engagement types on all graphs for completeness.
+
+
+
+    List of Available Datasets:
+        We provide three datasets, each consisting of one graph.
+        The graphs differ in the type of interaction represented by the edges:
+
+        .. list-table::
+           :header-rows: 1
+
+           * - Dataset name
+             - An edge from user *u* to user *v* indicates that...
+           * - ``bluesky_quotes``
+             - ...user *u* quoted a post by user *v*.
+           * - ``bluesky_replies``
+             - ...user *u* replied to a post by user *v*.
+           * - ``bluesky_reposts``
+             - ...user *u* reposted a post by user *v*.
     """
 
     _SOURCES_RAW: Dict[str, SourceSpec] = {
