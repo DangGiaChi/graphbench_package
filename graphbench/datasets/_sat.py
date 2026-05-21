@@ -564,7 +564,11 @@ class SATDataset(GraphDataset):
 
     def _load_graphs(self) -> List[Data]:
         if self.generate:
-            data_list = self._generate()
+            raise NotImplementedError(
+                "Data generation for SAT datasets will be implemented in a future release. "
+                "Until then, please download the pre-generated datasets using Loader.load()"
+            )
+            # data_list = self._generate()
         else:
             data_list = self._load_sat_graphs()
         return data_list
