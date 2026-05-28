@@ -36,9 +36,113 @@ if TYPE_CHECKING:
 # -----------------------------------------------------------------------------#
 
 _logger = get_logger(__name__)
-
+ 
 
 class CODataset(GraphDataset):
+    r"""
+    Combinatorial Optimization (CO) datasets.
+
+    Note:
+        This class **should only be used directly when generating new datasets**.
+        To access provided datasets, please consider using :class:`graphbench.Loader`.
+        The sections below give details on the data available through the :class:`graphbench.Loader` interface.
+
+    Overview:
+        In the CO datasets, we consider 3 classic NP-hard graph problems: the maximum independent set (MIS), the max-cut, and the graph coloring problem. 
+        We include tasks for both supervised and unsupervised learning settings:
+
+        - **Supervised setup**: Given a collection of CO
+          instances :math:`\mathcal{I}` and, for each instance
+          :math:`I \in \mathcal{I}`, an optimal solution
+          :math:`S^{*}_{I}` with objective value :math:`c(S^{*}_{I})` and a model :math:`m:\mathcal{I}\to\mathbb{R}`.
+          The learning task is to minimize the MAE between predicted and true optimal objectives:
+
+          .. math::
+            
+              \frac{1}{|\mathcal{I}|} \sum_{I \in \mathcal{I}} \left| m(I) - c(S^{*}_{I}) \right|
+
+          The supervised setup requires solver-generated
+          solutions and can be computationally expensive for large instances.
+
+
+        - **Unsupervised setup**: This setting is motivated when ground-truth
+          solutions are unavailable or expensive to obtain, and it directly
+          targets the CO problem. We provide a
+          differentiable surrogate loss :math:`\mathcal{L}:\mathbb{R}^{|\Omega(I)|}\to\mathbb{R}`
+          together with decoders :math:`d:\mathbb{R}^{|\Omega(I)|}\to F(I)`
+          for each CO problem. The learning task is to train the model :math:`m : I \to \mathbb{R}^{|\Omega(I)|}`
+          in an unsupervised fashion to predict a score for each
+          variable that indicates whether it belongs to the solution set,
+          minimizing
+
+          .. math::
+
+              \frac{1}{|\mathcal{I}|} \sum_{I \in \mathcal{I}} \mathcal{L}(m(I))
+
+        Currently, only MIS includes heuristic solutions generated with the
+        `KaMIS <https://github.com/KarlsruheMIS/KaMIS>`_ (Karlsruhe Maximum Independent Sets) solver.
+
+        We synthetically generate optimization problems across 3 well-established random graph families:
+
+        - Barabási-Albert (BA)
+        - Erdős-Rényi (ER)
+        - RB
+
+        Each graph family is available in 2 configurations: small and large, totaling 6 distinct datasets.
+        There are 50,000 graphs in each dataset. The small graphs contain 200-300 nodes, while the large graphs contain 700-1200 nodes (700-800 for ER and BA, 800-1200 for RB).
+        Note that the BA graphs are considerably less dense than the ER and RB graphs.
+
+        Please refer to the `GraphBench paper <https://arxiv.org/abs/2512.04475>`__ for the exact parameters used for graph generation.
+    
+    Splits:
+        All datasets use a 70% / 15% / 15% split for training, validation,
+        and testing.
+
+    Graph Attributes:
+        The generated graphs include no node or edge features, as the task focuses on combinatorial optimization based solely on graph structure.
+
+        .. list-table::
+           :header-rows: 1
+
+           * - Attribute name
+             - Size
+             - Description
+           * - ``num_mis``
+             - ``[1]``
+             - Optimal objective value of the given CO instance
+           * - ``mis_solution``
+             - ``[num_nodes]``
+             - Binary node indicators representing the optimal Maximum Independent Set solution
+
+    List of Available Datasets:
+        The available datasets are named using the pattern ``co_{generator}_{size}``,
+        where generator is one of ``ba``, ``er``, or ``rb``, and size is either ``small`` or ``large``.
+
+        Hence, valid dataset names for the loader are:
+        ``co_ba_small``,
+        ``co_er_small``,
+        ``co_rb_small``,
+        ``co_ba_large``,
+        ``co_er_large``,
+        and ``co_rb_large``.
+
+        For example:
+
+        .. code:: python
+
+            from graphbench import Loader
+            # loads the Barabási-Albert small dataset
+            dataset = Loader("data", "co_ba_small").load()
+
+        In addition to this, we provide ``co`` as a convenience identifier to load all of the above datasets.
+
+    Usage Notes:
+        The dataset class supports two modes:
+
+        1. Generate synthetic graphs using NetworkX random graph generators
+        2. Download and load pre-generated graphs.
+           We recommend against using this directly; use the interface provided by :class:`graphbench.Loader` instead
+    """
     def __init__(
         self,
         name: str,
@@ -47,26 +151,24 @@ class CODataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        target: Optional[str] = None,
         generate: Optional[bool] = False,
         num_samples: Optional[int] = None,
-        cleanup_raw: bool = True,
+        cleanup_raw: bool = False,
         # TODO: This should be removed in the future -- the user will download these files
         load_preprocessed = False,
     ):
         """
-        Initialize a CODataset instance.
-
-        Parameters
-        - name (str): Dataset identifier such as 'ba_small', 'er_large', etc.
-        - split (str): One of 'train', 'val', 'test'.
-        - root (str|Path): Root directory where the dataset folder will be created.
-        - transform, pre_transform: Optional PyG transforms applied at load time.
-        - target (str|None): Optional task variant (unused for unsupervised tasks).
-        - generate (bool): If True, generate synthetic graphs instead of downloading.
-        - num_samples (int|None): Number of synthetic graphs to generate when generate=True.
-        - cleanup_raw (bool): Whether to remove raw files after processing.
-
+        Args:
+            name: Dataset identifier in the form ``co_{graph_type}_{size}``, e.g. ``co_rb_large``.
+            split: Whether to load the train, validation, or test split of the dataset.
+            root: Root directory where the dataset folder will be created.
+            transform: Optional PyG transform applied to data objects before every access.
+            pre_transform: Optional PyG transform applied before saving data objects to disk.
+            pre_filter: A function that indicates whether a data object should be included in the final dataset.
+            generate: If True, generate synthetic graphs instead of downloading.
+            num_samples: Number of synthetic graphs to generate when generate=True.
+            cleanup_raw: If True, remove raw files after processing.
+            load_preprocessed: If True, load existing processed objects instead of regenerating.
         """
         #currently downloads everything at once for a single dataset. Up to the user to manually unpack it so far
         self.SOURCES: Dict[str, SourceSpec] = {
@@ -106,9 +208,7 @@ class CODataset(GraphDataset):
         #self.name_temp = name.replace("_"," ")
         #self.dataset_name = self.name_temp.lower().split(" ")[0]
         #self.size = self.name_temp.lower().split(" ")[1]
-        #self.target = self.name_temp.lower().split(" ")[2]
         #self.dataset_name = name.lower()
-        self.target = target
         self.num_samples = num_samples
         self.dataset_name = name.lower().split("_")[1] + "_" + name.lower().split("_")[2]
         if self.dataset_name not in self.SOURCES:
@@ -136,7 +236,6 @@ class CODataset(GraphDataset):
         
 
     def _generate(self) -> None:
-        #generate the corresponding algorithmic reasoning dataset
         # TODO RBDataset etc. may be using processed_dir where they should be using raw_dir. Refactor and get rid of SyntheticDataset.
         if self.num_samples is None:
             raise ValueError("num_samples cannot be None when generating a new dataset")
@@ -183,7 +282,7 @@ class CODataset(GraphDataset):
 
         return [self.get(i) for i in range(len(self))]
 
-    def _find_matching_files(self, directory, task, split: Optional[str] = None, size: Optional[str] = None, target: Optional[str] = None):
+    def _find_matching_files(self, directory, task, split: Optional[str] = None, size: Optional[str] = None):
         """
         Returns a list of filenames matching the convention in the directory.
         """
