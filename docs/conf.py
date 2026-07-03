@@ -116,6 +116,6 @@ mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "torch": ("https://docs.pytorch.org/docs/main", None),
-    "torch_geometric": ("https://pytorch-geometric.readthedocs.io/en/latest", None),
+    "torch_geometric": ("https://pytorch-geometric.readthedocs.io/en/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),
 }

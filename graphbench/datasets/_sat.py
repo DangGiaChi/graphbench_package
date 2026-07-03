@@ -261,6 +261,8 @@ class SATDataset(GraphDataset):
         self._logger = _logger
         self.cleanup_raw = cleanup_raw
 
+        self.to_undirected = T.ToUndirected()
+
         # paths
         self.sat_dir = Path(root) / "sat"
         self._raw_dir = (self.sat_dir / self.SOURCES[self.name].raw_folder / "raw" )
@@ -529,8 +531,7 @@ class SATDataset(GraphDataset):
             data = self._create_variable_graph(clauses, n_vars)
 
         try:
-            to_undirected = T.ToUndirected()
-            data = to_undirected(data)
+            data = self.to_undirected(data)
         except Exception as e:
             print(f"Error making graph undirected: {e}")
             print(f"File: {original_file_path}")
