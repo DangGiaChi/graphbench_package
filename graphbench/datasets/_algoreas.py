@@ -81,9 +81,15 @@ class AlgoReasDataset(GraphDataset):
     Splits:
         Training and validation graphs contain 16 nodes each, while test graphs contain 128 nodes.
 
-        We also provide additional size generalization datasets for each task, with 192, 256, 384, and 512 nodes each.
+        We also provide additional size generalization test sets for most tasks, with 192, 256, 384, and 512 nodes each.
         Note that these only contain test graphs, and the training and validation graphs from the main datasets should
         be used for training.
+        Since the difficulty level only influences the training graphs, there are no difficulty levels for the size
+        generalization datasets.
+        We do not provide graph generalisation datasets for maximum flow, since the metric we use is not comparable
+        across graph sizes.
+        We also currently do not provide a size generalization dataset for bipartite matching with 512 nodes, since
+        generating the data at this scale is computationally expensive.
 
 
     Graph Attributes:
@@ -152,8 +158,11 @@ class AlgoReasDataset(GraphDataset):
         In addition to this, we provide convenience identifiers for loading all datasets of a given difficulty level,
         using ``algorithmic_reasoning_easy``, ``algorithmic_reasoning_medium``, and ``algorithmic_reasoning_hard``.
 
-        The size generalization datasets can be loaded with ``TODO``.
-        Note that these only include test graphs.
+        The size generalization datasets can be loaded with ``{task}_sizegen_{size}``, where size is one of
+        ``192``, ``256``, ``384``, or ``512``.
+        For example, to load the size generalization dataset for the maximum clique task with 256 nodes, use
+        ``maxclique_sizegen_256``.
+        See the section "Splits" above for more details on the size generalization datasets.
     """
 
     def __init__(
