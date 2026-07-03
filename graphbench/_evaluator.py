@@ -421,31 +421,6 @@ class Evaluator():
         score = (100.0 * total_score) / N if N > 0 else 0.0
         return torch.tensor(score)
 
-    def _extract_truth_vectors(self, truth_vectors, num_inputs, num_outputs):
-        """Fast truth vector extraction with numpy operations.
-
-        Convert arrays with possible -1 padding to a compact boolean
-        matrix of shape `(num_outputs, 2**num_inputs)`.
-        Returns `None` on invalid input.
-        """
-        expected_length = 2**num_inputs
-        result = np.zeros((num_outputs, expected_length), dtype=np.uint8)
-
-        for output_idx, truth_vector in enumerate(truth_vectors):
-            # Find length (-1 padding)
-            length = 0
-            for val in truth_vector:
-                if val == -1:
-                    break
-                length += 1
-
-            if length != expected_length:
-                return None  # Invalid truth vector
-
-            result[output_idx] = truth_vector[:length]
-
-        return result
-
     def _extract_input_output_counts(self, x: Tensor):
         """Extract the number of input and output nodes from `x`.
 
