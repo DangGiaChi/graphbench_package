@@ -25,9 +25,9 @@ class AlgoReasDataset(GraphDataset):
     Algorithmic reasoning (AlgoReas) datasets.
 
     Note:
-        This class **should only be used directly when generating new datasets**.
-        To access provided datasets, please consider using :class:`graphbench.Loader`.
-        The sections below give details on the data available through the :class:`graphbench.Loader` interface.
+        This class **should not be used directly**, please use :class:`graphbench.Loader` instead to access the provided
+        datasets.
+        The purpose of this page is merely to provide details on the dataset.
 
 
     Overview:
@@ -154,14 +154,6 @@ class AlgoReasDataset(GraphDataset):
 
         The size generalization datasets can be loaded with ``TODO``.
         Note that these only include test graphs.
-
-
-    Usage Notes:
-        The dataset class supports two modes:
-
-        1. Generate synthetic graphs using NetworkX random graph generators
-        2. Download and load pre-generated graphs.
-           We recommend using the interface provided by :class:`graphbench.Loader` instead of using this directly
     """
 
     def __init__(
@@ -172,7 +164,6 @@ class AlgoReasDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        generate: bool = False,
         cleanup_raw: bool = False,
     ):
         """
@@ -185,7 +176,6 @@ class AlgoReasDataset(GraphDataset):
             transform: Optional PyG transform applied to data objects before every access.
             pre_transform: Optional PyG transform applied before saving data objects to disk.
             pre_filter: A function that indicates whether a data object should be included in the final dataset.
-            generate: If True, generate synthetic graphs instead of downloading.
             cleanup_raw: If True, remove raw files after processing.
         """
 
@@ -231,7 +221,7 @@ class AlgoReasDataset(GraphDataset):
         assert split in ["train", "val", "test"], "Only 'train', 'val', 'test' splits are supported."
 
 
-        self.generate = generate
+        self.generate = False  # not implemented yet
         self.split = split
         self.source = self.SOURCES[self.dataset_name]
         self._logger = _logger

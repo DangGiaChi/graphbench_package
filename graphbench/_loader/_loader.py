@@ -208,7 +208,6 @@ class Loader():
             pre_transform=self.pre_transform,
             transform=self.transform,
             split=split,
-            generate=self.generate,
         )
 
     def _make_bluesky_dataset(
