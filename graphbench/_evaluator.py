@@ -116,10 +116,10 @@ class Evaluator():
 
     def _check_input(
         self,
-        y_pred: Union[Tensor, np.ndarray],
-        y_true: Optional[Union[Tensor, np.ndarray]] = None,
+        y_pred: Union[Tensor, np.ndarray, list[Data]],
+        y_true: Optional[Union[Tensor, np.ndarray, list[Data]]] = None,
         batch: Optional[Batch] = None,
-    ) -> tuple[Tensor, Union[Tensor, Batch]]:
+    ) -> tuple[Union[Tensor, list[Data]], Union[Tensor, list[Data], Batch]]:
         if batch is None and y_true is None:
             raise ValueError("Either y_true or batch must be provided.")
         if batch is not None:
@@ -135,6 +135,11 @@ class Evaluator():
 
         if y_pred.size(0) != y_true.size(0):
             raise ValueError(f"y_pred and y_true must have the same number of samples. Got {y_pred.size(0)} and {y_true.size(0)}.")
+
+        if isinstance(y_pred, list) and all(isinstance(d, Data) for d in y_pred) and \
+            isinstance(y_true, list) and all(isinstance(d, Data) for d in y_true):
+            # The case where y_pred and y_true are lists of Data objects is relevant for ChipDesign
+            return y_pred, y_true
 
         if not isinstance(y_pred, torch.Tensor) and not isinstance(y_pred, np.ndarray):
             raise ValueError(f"y_pred must be a torch.Tensor or numpy.ndarray. Got {type(y_pred)}.")
@@ -192,8 +197,8 @@ class Evaluator():
 
     def evaluate(
         self,
-        y_pred: Union[Tensor, np.ndarray],
-        y_true: Optional[Union[Tensor, np.ndarray]] = None,
+        y_pred: Union[Tensor, np.ndarray, list[Data]],
+        y_true: Optional[Union[Tensor, np.ndarray, list[Data]]] = None,
         batch: Optional[Batch] = None,
     ) -> Union[float, list[float]]:
         """
@@ -389,7 +394,7 @@ class Evaluator():
                     num_outputs = target_circuit.num_outputs
                 else:
                     # Extract from node features using proper extraction logic
-                    num_inputs, num_outputs = self.extract_input_output_counts(target_circuit.x)
+                    num_inputs, num_outputs = self._extract_input_output_counts(target_circuit.x)
 
                 # Set num_inputs and num_outputs on both circuits
                 pred_circuit.num_inputs = num_inputs
@@ -421,7 +426,7 @@ class Evaluator():
         score = (100.0 * total_score) / N if N > 0 else 0.0
         return torch.tensor(score)
 
-    def _extract_input_output_counts(self, x: Tensor):
+    def _extract_input_output_counts(self, x: Tensor) -> tuple[int, int]:
         """Extract the number of input and output nodes from `x`.
 
         The method assumes `x` has three columns encoding node types as a one-hot vector: [AND, INPUT, OUTPUT].
