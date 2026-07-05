@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import time 
 from pathlib import Path
-from typing import Callable, Dict, List, Literal, Optional, Union, Any
+from typing import Callable, Dict, List, Literal, Optional, Union, Any, Sequence, Tuple 
 
 from torch_geometric.data import Data
 from loguru import logger
@@ -346,6 +346,75 @@ def compute_temporal_splits(
         test_years=(2018, 2021),
     )
 
+def compute_fixed_year_splits(
+    datetimes: Sequence[np.datetime64],
+    *,
+    train_years: tuple[int, int] = (1979, 2015),
+    val_years: tuple[int, int] = (2016, 2017),
+    test_years: tuple[int, int] = (2018, 2021),
+) -> TemporalSplits:
+    """Split a datetime sequence by calendar-year ranges.
+
+    Sorts unsorted input internally and maps indices back to the original order.
+    Falls back to 80/10/10 proportional split when any year-based split is empty.
+    """
+    dts = np.asarray(datetimes)
+    if dts.ndim != 1 or dts.size == 0:
+        return TemporalSplits(
+            train_idx=np.arange(dts.size, dtype=np.int64),
+            val_idx=np.array([], dtype=np.int64),
+            test_idx=np.array([], dtype=np.int64),
+        )
+
+    if not np.all(dts[:-1] <= dts[1:]):
+        order = np.argsort(dts, kind="stable")
+        dts_sorted = dts[order]
+    else:
+        order = None
+        dts_sorted = dts
+
+    years = dts_sorted.astype('datetime64[Y]').astype(int) + 1970
+
+    def _range_mask(yrs: np.ndarray, yr_range: tuple[int, int]) -> np.ndarray:
+        start, end = int(yr_range[0]), int(yr_range[1])
+        return (yrs >= start) & (yrs <= end)
+
+    train_mask = _range_mask(years, train_years)
+    val_mask = _range_mask(years, val_years)
+    test_mask = _range_mask(years, test_years)
+
+    train_idx_sorted = np.nonzero(train_mask)[0].astype(np.int64)
+    val_idx_sorted = np.nonzero(val_mask)[0].astype(np.int64)
+    test_idx_sorted = np.nonzero(test_mask)[0].astype(np.int64)
+
+    # Proportional fallback when any split is empty
+    if (
+        train_idx_sorted.size < 1
+        or val_idx_sorted.size < 1
+        or test_idx_sorted.size < 1
+    ):
+        n = dts.size
+        n_train = max(int(0.8 * n), 1)
+        n_val = max(int(0.1 * n), 1)
+        n_test = max(n - n_train - n_val, 1)
+        if n_train + n_val + n_test > n:
+            n_test = n - n_train - n_val
+        train_idx_sorted = np.arange(0, n_train, dtype=np.int64)
+        val_idx_sorted = np.arange(n_train, n_train + n_val, dtype=np.int64)
+        test_idx_sorted = np.arange(n_train + n_val, n, dtype=np.int64)
+
+    if order is not None:
+        def backmap(sorted_idx: np.ndarray) -> np.ndarray:
+            return order[sorted_idx]
+
+        train_idx = backmap(train_idx_sorted)
+        val_idx = backmap(val_idx_sorted)
+        test_idx = backmap(test_idx_sorted)
+        train_idx.sort(); val_idx.sort(); test_idx.sort()
+    else:
+        train_idx, val_idx, test_idx = train_idx_sorted, val_idx_sorted, test_idx_sorted
+
+    return TemporalSplits(train_idx=train_idx, val_idx=val_idx, test_idx=test_idx)
 
 class EfficientWeatherGraphDataset(InMemoryDataset):
     """
