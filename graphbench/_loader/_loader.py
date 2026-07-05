@@ -10,7 +10,7 @@ from torch_geometric.data import Data, InMemoryDataset
 from graphbench._metadata import expand_dataset_names
 from ._dataset_registry import DatasetRegistry
 from ._split_strategies import AlgoReasSplitStrategy, FixedSplitStrategy, RatioSplitStrategy, TrainValTestSet
-
+from graphbench.datasets._weatherforecasting import _prepare_weather_cache_once, EfficientWeatherGraphDataset
 
 
 class Loader():
@@ -252,15 +252,22 @@ class Loader():
         split: str,
         name_override: Optional[str] = None,
     ) -> InMemoryDataset:
-        from graphbench.datasets import WeatherforecastingDataset
+        #from graphbench.datasets import WeatherforecastingDataset
 
-        return WeatherforecastingDataset(
+        timeout_s = 3600
+        skip_cache_build = False
+        #hier noch anpassen auf unsere konvention
+        use_prebuilt = True
+
+        _prepare_weather_cache_once(self.root, timeout_s=timeout_s, skip_cache_build=skip_cache_build, task_name=name_override or dataset_name, use_prebuilt=use_prebuilt)
+        #dataset = EfficientWeatherGraphDataset(root=root, pre_transform=None, transform=None)
+
+        #hier noch den return anpassen
+        return EfficientWeatherGraphDataset(
             root=self.root,
-            name=name_override or dataset_name,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
-            transform=self.transform,
-            split=split,
+            transform=self.transform
         )
 
     def _make_co_dataset(

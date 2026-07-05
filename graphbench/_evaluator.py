@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union, TypeAlias
+from typing import Callable, Dict, Optional, Union, TypeAlias
 
 import numpy as np
 import torch
@@ -17,12 +17,10 @@ from graphbench.helpers.combinatorial_optimization import (
 from graphbench._metadata import get_master_df
 from graphbench._helpers import VectorizedCircuitSimulator
 from graphbench._weatherforecasting_helpers import (
-    compute_latitude_weights,
-    compute_pressure_level_weights,
-    get_default_pressure_levels,
-    get_variable_weights,
-    masked_loss,
+    compute_weather_metric_breakdown,
 )
+
+from graphbench.datasets._weatherforecasting import _load_static_files
 
 
 # note that this is not the same having the Union inside the Callable, which would be too permissive
@@ -172,7 +170,7 @@ class Evaluator():
             'RMSE': self.get_rmse(),
             'RSE': self.get_rse(),
             'ChipDesignScore': self.get_chip_design_score(),
-            'Weather_MSE': self.get_weather_mse(),
+            'Weather_MSE': self.get_weather_metric_breakdown(),
             'ClosedGap': self.get_closed_gap(),
             'MisSize': self.get_mis_size(),
             'MaxCutSize': self.get_max_cut_size(),
@@ -200,6 +198,7 @@ class Evaluator():
         y_pred: Union[Tensor, np.ndarray, list[Data]],
         y_true: Optional[Union[Tensor, np.ndarray, list[Data]]] = None,
         batch: Optional[Batch] = None,
+        root: Optional[str] = None,
     ) -> Union[float, list[float]]:
         """
         Computes the selected metric(s) for the given predictions and true values.
@@ -212,6 +211,7 @@ class Evaluator():
             y_pred: Predicted values as a torch tensor or numpy array of shape (N,K)
             y_true: True values as a torch tensor or numpy array of shape (N,K) or (N,1), defaults to None
             batch: Optional batch information for unsupervised tasks, defaults to None
+            root: Root folder for data downloads, used for weatherforecasting data to obtain variable information. 
         """
         metric = self._get_metric()
         if batch is not None:
@@ -220,8 +220,12 @@ class Evaluator():
                 return [met(y_pred, batch).item() for met in metric]
             return metric(y_pred, batch).item()
 
-        y_pred, y_true = self._check_input(y_pred, y_true)
 
+        y_pred, y_true = self._check_input(y_pred, y_true)
+        if root is not None: 
+            if isinstance(metric, list):
+                return [met(y_pred, y_true, root) for met in metric]
+            return metric(y_pred, y_true, root)
         if isinstance(metric, list):
             return [met(y_pred, y_true).item() for met in metric]
         return metric(y_pred, y_true).item()
@@ -286,13 +290,6 @@ class Evaluator():
         """
         return lambda y_pred, y_true: self._get_chip_design_score(y_pred, y_true)
 
-    def get_weather_mse(self) -> Callable[[Tensor, Tensor], Tensor]:
-        """
-        Returns:
-            A callable that takes ``y_pred, y_true`` and computes the mean squared error (MSE) for weather
-            forecasting data.
-        """
-        return lambda y_pred, y_true: self._get_weather_mse(y_pred, y_true)
 
     def get_mis_size(self) -> Callable[[Tensor, Batch], Tensor]:
         """
@@ -468,26 +465,29 @@ class Evaluator():
             # No match
             return 0.0
 
-    # TODO I annotated y_true as Tensor, because masked_loss expects a Tensor. However, in the comment it looks like
-    #      y_true needs to be a Data object. To me it looks like the implementation is simply incorrect.
-    def _get_weather_mse(self, y_pred: Tensor, y_true: Tensor) -> Tensor:
-        grid_variables = [
-            '2m_temperature', 'mean_sea_level_pressure', '10m_v_component_of_wind',
-            '10m_u_component_of_wind', 'total_precipitation_6hr', 'temperature',
-            'geopotential', 'u_component_of_wind', 'v_component_of_wind',
-            'vertical_velocity', 'specific_humidity'
-        ]
+    def get_weather_metric_breakdown(self) -> Callable[[Tensor, Tensor, str], Dict[str, float]]:
+        """
+        Returns:
+            A callable that takes ``y_pred, y_true`` and returns a dict of per-variable-group MSE
+            values, plus per-pressure-level MSE for multi-level variables (e.g. temperature at
+            each pressure level), for weather forecasting data.
+        """
+        return lambda y_pred, y_true, root: self._get_weather_metric_breakdown(y_pred, y_true, root)
 
-        # assuming y_true is the data object and not only the prediction tensor
-        # TODO: change format of y_true in evaluator call if needed
-        return masked_loss(
-            predictions=y_pred,
-            targets=y_true,
-            variable_slices=None,
-            variable_weights=get_variable_weights(grid_variables),
-            variable_names=grid_variables,
-            latitude_weights=compute_latitude_weights(y_true.grid_lat),
-            pressure_level_weights=compute_pressure_level_weights(get_default_pressure_levels()),
+    def _get_weather_metric_breakdown(self, y_pred: Tensor, y_true: Tensor, root: str) -> Dict[str, float]:
+        #first get metadata information about slices and variables 
+
+        metadata, _ = _load_static_files(root)
+
+        feature_group_slices = metadata['variable_channel_slices']
+        feature_group_names = metadata['grid_variables']
+
+        #TODO get correct metadata and spatially weighting for evaluation 
+        return compute_weather_metric_breakdown(
+            y_pred=y_pred,
+            y_true=y_true,
+            feature_group_slices=feature_group_slices,
+            feature_group_names=feature_group_names,
         )
 
     def get_mse(self) -> Callable[[Tensor, Tensor], Tensor]:
