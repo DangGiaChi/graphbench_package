@@ -9,20 +9,15 @@ which then can be used in downstream tasks. Furthermore, support for generation 
 
 from __future__ import annotations
 
-import os
 import time 
 from pathlib import Path
-from typing import Callable, Dict, List, Literal, Optional, Union, Any, Sequence, Tuple 
-
-from torch_geometric.data import Data
+from typing import  Dict, Optional, Any, Sequence, Tuple 
 from loguru import logger
-from graphbench._helpers import download_and_unpack, SourceSpec, get_logger
-from ._base import GraphDataset
-from torch_geometric.data import Data, Dataset, InMemoryDataset
+from graphbench._helpers import get_logger
+from torch_geometric.data import Data, InMemoryDataset
 from dataclasses import dataclass
 import torch 
 import pickle 
-import xarray as xr
 import numpy as np
 
 try:
@@ -30,7 +25,6 @@ try:
 except Exception:
     def tqdm(iterable, *args, **kwargs):
         return iterable
-from torch.utils.data import Subset
 # (i) helper functions
 
 # -----------------------------------------------------------------------------#
@@ -410,7 +404,9 @@ def compute_fixed_year_splits(
         train_idx = backmap(train_idx_sorted)
         val_idx = backmap(val_idx_sorted)
         test_idx = backmap(test_idx_sorted)
-        train_idx.sort(); val_idx.sort(); test_idx.sort()
+        train_idx.sort()
+        val_idx.sort()
+        test_idx.sort()
     else:
         train_idx, val_idx, test_idx = train_idx_sorted, val_idx_sorted, test_idx_sorted
 

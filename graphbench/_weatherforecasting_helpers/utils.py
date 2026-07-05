@@ -5,19 +5,14 @@ splitting, and a PyG InMemoryDataset for GraphCast-style weather models.
 """
 
 import numpy as np
-from typing import Tuple, Optional
 import torch
-from pathlib import Path
-import pickle
-from typing import List, Dict, Any, Optional, Tuple, Sequence
-from torch.utils.data import Subset
+from typing import List, Dict, Any, Sequence, Tuple, Optional
 import xarray as xr
 try:
     from tqdm.auto import tqdm
 except Exception:
     def tqdm(iterable, *args, **kwargs):
         return iterable
-from torch_geometric.data import Data, Dataset, InMemoryDataset
 from dataclasses import dataclass
 
 
@@ -351,7 +346,9 @@ def compute_fixed_year_splits(
         train_idx = backmap(train_idx_sorted)
         val_idx = backmap(val_idx_sorted)
         test_idx = backmap(test_idx_sorted)
-        train_idx.sort(); val_idx.sort(); test_idx.sort()
+        train_idx.sort()
+        val_idx.sort()
+        test_idx.sort()
     else:
         train_idx, val_idx, test_idx = train_idx_sorted, val_idx_sorted, test_idx_sorted
 
