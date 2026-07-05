@@ -10,8 +10,9 @@ which then can be used in downstream tasks. Furthermore, support for generation 
 from __future__ import annotations
 
 import os
+import time 
 from pathlib import Path
-from typing import Callable, Dict, List, Literal, Optional, Union
+from typing import Callable, Dict, List, Literal, Optional, Union, Any
 
 from torch_geometric.data import Data
 from loguru import logger
@@ -22,6 +23,8 @@ from dataclasses import dataclass
 import torch 
 import pickle 
 import xarray as xr
+import numpy as np
+
 try:
     from tqdm.auto import tqdm
 except Exception:
@@ -312,6 +315,36 @@ def _ensure_raw_weather_files(root: str, task_name: str) -> None:
         except Exception as exc:
             logger.warning(f"  Failed to download {hf_name}: {exc}")
 
+@dataclass(frozen=True)
+class TemporalSplits:
+    """Immutable container for train/val/test index arrays."""
+    train_idx: np.ndarray
+    val_idx: np.ndarray
+    test_idx: np.ndarray
+
+    def as_slices(self) -> Tuple[slice, slice, slice]:
+        """Convert index arrays to contiguous slices (assumes sorted, contiguous indices)."""
+        def to_slice(indices: np.ndarray) -> slice:
+            if indices.size == 0:
+                return slice(0, 0)
+            return slice(int(indices[0]), int(indices[-1]) + 1)
+
+        return to_slice(self.train_idx), to_slice(self.val_idx), to_slice(self.test_idx)
+
+
+def compute_temporal_splits(
+    datetimes: Sequence[np.datetime64],
+) -> TemporalSplits:
+    """Split datetimes into train (1979-2015), val (2016-2017), test (2018-2021).
+
+    Falls back to 80/10/10 proportional split when any year-based split is empty.
+    """
+    return compute_fixed_year_splits(
+        datetimes,
+        train_years=(1979, 2015),
+        val_years=(2016, 2017),
+        test_years=(2018, 2021),
+    )
 
 
 class EfficientWeatherGraphDataset(InMemoryDataset):
