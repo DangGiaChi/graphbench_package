@@ -59,7 +59,7 @@ _HF_WEATHER_STATIC_FILES = {
 
 # Data files specific to each task (sourced from the task-specific repo).
 # weather_64.pt is the raw timestep data; saved as weather_dataset.pt which is
-# what EfficientWeatherGraphDataset.process() expects.
+# what WeatherforecastingDataset.process() expects.
 _HF_WEATHER_DATA_FILES = {
     "weather_64.pt": "weather_dataset.pt",
 }
@@ -114,7 +114,7 @@ def _prepare_weather_cache_once(root: str, timeout_s: int, skip_cache_build: boo
     Raw component files (static_components.pkl, metadata.pkl, etc.) are
     downloaded from HuggingFace automatically when missing.
     """
-    #from wf_utils import EfficientWeatherGraphDataset
+    #from wf_utils import WeatherforecastingDataset
 
     root_path = Path(root)
     processed_path = root_path /"weather" / "processed" / "weather_graph_data_processed.pt"
@@ -137,7 +137,7 @@ def _prepare_weather_cache_once(root: str, timeout_s: int, skip_cache_build: boo
         elif not processed_path.exists():
             _ensure_raw_weather_files(root, task_name)
             logger.info(f"Rank 0 building weather processed cache at {processed_path}")
-            EfficientWeatherGraphDataset(root=root, pre_transform=None, transform=None)
+            WeatherforecastingDataset(root=root, pre_transform=None, transform=None)
         else:
             logger.info(f"Rank 0 reusing existing weather processed cache at {processed_path}")
 
@@ -412,7 +412,7 @@ def compute_fixed_year_splits(
 
     return TemporalSplits(train_idx=train_idx, val_idx=val_idx, test_idx=test_idx)
 
-class EfficientWeatherGraphDataset(InMemoryDataset):
+class WeatherforecastingDataset(InMemoryDataset):
     """
     Weather forecasting dataset.
 
