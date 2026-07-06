@@ -16,5 +16,5 @@ __all__ = [
     "CODataset",
     "ECDataset",
     "SATDataset",
-    "EfficientWeatherGraphDataset",
+    "WeatherforecastingDataset",
 ]
