@@ -10,7 +10,7 @@ from torch_geometric.data import Data, InMemoryDataset
 from graphbench._metadata import expand_dataset_names
 from ._dataset_registry import DatasetRegistry
 from ._split_strategies import AlgoReasSplitStrategy, FixedSplitStrategy, RatioSplitStrategy, TrainValTestSet
-from graphbench.datasets._weatherforecasting import _prepare_weather_cache_once, EfficientWeatherGraphDataset
+from graphbench.datasets._weatherforecasting import _prepare_weather_cache_once, WeatherforecastingDataset
 
 
 class Loader():
@@ -263,7 +263,7 @@ class Loader():
         #dataset = EfficientWeatherGraphDataset(root=root, pre_transform=None, transform=None)
 
         #hier noch den return anpassen
-        return EfficientWeatherGraphDataset(
+        return WeatherforecastingDataset(
             root=self.root,
             pre_filter=self.pre_filter,
             pre_transform=self.pre_transform,
