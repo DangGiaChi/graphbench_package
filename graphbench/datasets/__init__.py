@@ -5,7 +5,7 @@ from ._chipdesign import ChipDesignDataset
 from ._combinatorial_optimization import CODataset
 from ._electroniccircuits import ECDataset
 from ._sat import SATDataset
-from ._weatherforecasting import WeatherforecastingDataset
+from ._weatherforecasting import EfficientWeatherGraphDataset
 
 
 __all__ = [
@@ -16,5 +16,5 @@ __all__ = [
     "CODataset",
     "ECDataset",
     "SATDataset",
-    "WeatherforecastingDataset",
+    "EfficientWeatherGraphDataset",
 ]
