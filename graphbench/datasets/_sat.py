@@ -157,7 +157,7 @@ class SATDataset(GraphDataset):
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
         use_satzilla_features: bool = False,
-        cleanup_raw: bool = False,
+        cleanup_raw: bool = True,
         solver: Optional[str] = None,
     ):
         """

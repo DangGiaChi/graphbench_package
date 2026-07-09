@@ -104,7 +104,7 @@ class ChipDesignDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = False,  # TODO Disabling this for now since it leads to errors on my machine
+        cleanup_raw: bool = True,  # TODO Disabling this for now since it leads to errors on my machine
     ):
         """
         Args:

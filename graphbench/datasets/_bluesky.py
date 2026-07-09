@@ -284,7 +284,7 @@ class BlueSkyDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = False,
+        cleanup_raw: bool = True,
         # TODO: This should be removed in the future -- the user will download these files
         load_preprocessed = True,
         feature_file_name: Union[str, Path] = _FEATURE_PT_PATH,

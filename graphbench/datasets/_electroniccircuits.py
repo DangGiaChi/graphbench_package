@@ -142,7 +142,7 @@ class ECDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = False,
+        cleanup_raw: bool = True,
         target_vout : Optional[float] = None,
         vout_norm_method : Optional[Literal["min-max", "reward", "IQR", "z-score"]] = "min-max",
     ):

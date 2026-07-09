@@ -173,7 +173,7 @@ class AlgoReasDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = False,
+        cleanup_raw: bool = True,
     ):
         """
         Args:
