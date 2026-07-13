@@ -225,7 +225,6 @@ class Loader():
             pre_transform=self.pre_transform,
             transform=self.transform,
             split=split,
-            cleanup_raw=False,
             load_preprocessed=True,
         )
 
