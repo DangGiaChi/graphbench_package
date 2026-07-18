@@ -157,7 +157,7 @@ class SATDataset(GraphDataset):
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
         use_satzilla_features: bool = False,
-        cleanup_raw: bool = True,
+        cleanup_raw: bool = False,
         solver: Optional[str] = None,
     ):
         """
@@ -213,7 +213,6 @@ class SATDataset(GraphDataset):
             download_and_unpack(
                 source=self.SOURCE_CSV,
                 raw_dir=csv_dir,
-                processed_dir=csv_dir / "processed",
                 logger=_logger,
             )
         self.solver = solver
@@ -632,7 +631,6 @@ class SATDataset(GraphDataset):
         download_and_unpack(
             source=self.source,
             raw_dir=self._raw_dir,
-            processed_dir=self.processed_path,
             logger=_logger,
         )
 

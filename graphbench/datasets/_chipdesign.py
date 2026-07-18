@@ -104,7 +104,7 @@ class ChipDesignDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = True,  # TODO Disabling this for now since it leads to errors on my machine
+        cleanup_raw: bool = False,  # TODO Disabling this for now since it leads to errors on my machine
     ):
         """
         Args:
@@ -157,7 +157,6 @@ class ChipDesignDataset(GraphDataset):
         download_and_unpack(
             source=self.source,
             raw_dir=self._raw_dir,
-            processed_dir=self.processed_path,
             logger=_logger,
         )
 

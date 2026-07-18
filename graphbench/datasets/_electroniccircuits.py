@@ -142,7 +142,7 @@ class ECDataset(GraphDataset):
         transform: Optional[Callable[[Data], Data]] = None,
         pre_transform: Optional[Callable[[Data], Data]] = None,
         pre_filter: Optional[Callable[[Data], bool]] = None,
-        cleanup_raw: bool = True,
+        cleanup_raw: bool = False,
         target_vout : Optional[float] = None,
         vout_norm_method : Optional[Literal["min-max", "reward", "IQR", "z-score"]] = "min-max",
     ):
@@ -228,7 +228,6 @@ class ECDataset(GraphDataset):
         download_and_unpack(
             source=self.source,
             raw_dir=self._raw_dir,
-            processed_dir=self.processed_path,
             logger=_logger,
         )
 
